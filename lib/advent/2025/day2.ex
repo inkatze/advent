@@ -4,25 +4,31 @@ defmodule Advent2025.Day2 do
              |> File.read!()
              |> String.split(",", trim: true)
 
-  @spec check_ranges_part1(list(String.t())) :: integer()
-  def check_ranges_part1(ranges \\ @id_ranges) do
-    Enum.map(ranges, &find_pattern/1) |> List.flatten() |> Enum.sum()
+  @spec check_ranges(list(String.t()), :part1 | :part2) :: integer()
+  def check_ranges(ranges \\ @id_ranges, type \\ :part2) do
+    Enum.map(ranges, fn range -> find_pattern(range, type) end) |> List.flatten() |> Enum.sum()
   end
 
-  @spec find_pattern(String.t()) :: list(integer())
-  def find_pattern(range) do
+  @spec find_pattern(String.t(), :part1 | :part2) :: list(integer())
+  def find_pattern(range, type) do
     [start, finish] =
       String.split(range, "-")
       |> Enum.map(fn range_limit -> String.replace(range_limit, "\n", "") end)
       |> Enum.map(&String.to_integer/1)
 
-    Enum.filter(start..finish, &elf_id_found?/1)
+    Enum.filter(start..finish, fn range -> elf_id_found?(range, type) end)
   end
 
-  @spec elf_id_found?(integer()) :: boolean()
-  def elf_id_found?(number) do
+  @spec elf_id_found?(integer(), :part1 | :part2) :: boolean()
+  def elf_id_found?(number, type) do
     number_array_string = Integer.to_string(number) |> String.graphemes()
-    even_chunk_sizes = divisors(length(number_array_string))
+    id_size = length(number_array_string)
+
+    even_chunk_sizes =
+      case type do
+        :part1 -> if rem(id_size, 2) == 0, do: [div(id_size, 2)], else: []
+        :part2 -> divisors(id_size)
+      end
 
     any_response =
       Enum.any?(even_chunk_sizes, fn chunk_size ->
@@ -34,7 +40,7 @@ defmodule Advent2025.Day2 do
 
   @spec divisors(integer()) :: list(integer())
   def divisors(n) do
-    for i <- 1..n, rem(n, i) == 0 and i < n and div(n, i) == 2, do: i
+    for i <- 1..n, rem(n, i) == 0 and i < n, do: i
   end
 
   @spec is_code_elfed?(list(String.t()), integer()) :: boolean()
