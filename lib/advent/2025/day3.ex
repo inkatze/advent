@@ -5,39 +5,38 @@ defmodule Advent2025.Day3 do
              |> String.split("\n", trim: true)
 
   @spec battery_selector(list(String.t())) :: integer()
-  def battery_selector(batteries \\ @batteries) do
-    Enum.map(batteries, &max_sequential_joltage/1) |> Enum.sum()
+  def battery_selector(batteries \\ @batteries, size \\ 2) do
+    Enum.map(batteries, &max_sequential_joltage(&1, size)) |> Enum.sum()
   end
 
-  @spec max_sequential_joltage(String.t()) :: integer()
-  def max_sequential_joltage(battery) do
+  @spec max_sequential_joltage(String.t(), integer()) :: integer()
+  def max_sequential_joltage(battery, size) do
     battery
     |> String.graphemes()
     |> Enum.map(&String.to_integer/1)
-    |> find_max_sequential_two_digits()
+    |> find_sequence(size)
+    |> Enum.join()
+    |> String.to_integer()
   end
 
-  @spec find_max_sequential_two_digits(list(integer())) :: integer()
-  def find_max_sequential_two_digits(joltages) do
-    joltages_with_index = Enum.with_index(joltages)
+  @spec find_sequence(list(integer()), integer(), list(integer())) :: list(integer())
+  defp find_sequence(joltages, size, start_index \\ 0, acc \\ [])
 
-    [{largest_value, largest_value_pos}, {second_largest_value, second_largest_value_pos} | _] =
-      Enum.sort(joltages_with_index, :desc)
+  defp find_sequence(_joltages, 0, _start_index, acc) do
+    acc
+  end
 
-    case largest_value - second_largest_value do
-      0 ->
-        "#{largest_value}#{largest_value}"
+  defp find_sequence(joltages, 1, start_index, acc) do
+    acc ++ [Enum.slice(joltages, start_index, length(joltages)) |> Enum.max()]
+  end
 
-      _ ->
-        if largest_value == List.last(joltages),
-          do: "#{second_largest_value}#{largest_value}",
-          else:
-            if(second_largest_value_pos > largest_value_pos,
-              do: "#{largest_value}#{second_largest_value}",
-              else:
-                "#{largest_value}#{Enum.max(Enum.slice(joltages, largest_value_pos + 1, Enum.count(joltages)))}"
-            )
-    end
-    |> String.to_integer()
+  defp find_sequence(joltages, size, start_index, acc) do
+    IO.puts("Finding size #{size} with acc #{inspect(acc)}")
+    slice_end = length(joltages) - (size - length(acc))
+
+    {value, index} =
+      Enum.slice(Enum.with_index(joltages), start_index, slice_end + 1) |> Enum.max()
+
+    find_sequence(joltages, size - 1, index + 1, acc ++ [value])
   end
 end
