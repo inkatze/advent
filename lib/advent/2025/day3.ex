@@ -4,8 +4,13 @@ defmodule Advent2025.Day3 do
              |> File.read!()
              |> String.split("\n", trim: true)
 
-  @spec battery_selector(list(String.t())) :: integer()
-  def battery_selector(batteries \\ @batteries, size \\ 2) do
+  def two_battery_selector(batteries \\ @batteries, size \\ 2),
+    do: battery_selector(batteries, size)
+
+  def twelve_battery_selector(batteries \\ @batteries, size \\ 12),
+    do: battery_selector(batteries, size)
+
+  defp battery_selector(batteries, size) do
     Enum.map(batteries, &max_sequential_joltage(&1, size)) |> Enum.sum()
   end
 
@@ -31,11 +36,11 @@ defmodule Advent2025.Day3 do
   end
 
   defp find_sequence(joltages, size, start_index, acc) do
-    IO.puts("Finding size #{size} with acc #{inspect(acc)}")
-    slice_end = length(joltages) - (size - length(acc))
+    slice_end = length(joltages) - size
 
     {value, index} =
-      Enum.slice(Enum.with_index(joltages), start_index, slice_end + 1) |> Enum.max()
+      Enum.slice(Enum.with_index(joltages), start_index, slice_end - start_index + 1)
+      |> Enum.max_by(fn {val, idx} -> {val, -idx} end)
 
     find_sequence(joltages, size - 1, index + 1, acc ++ [value])
   end
